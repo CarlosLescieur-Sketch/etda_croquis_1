@@ -201,16 +201,80 @@
   .tree circle{fill:var(--c-areas-verdes); stroke:#2f5a24; stroke-width:0.6;}
 
   footer{
-    padding:12px 28px 18px;
+    padding:20px 28px 22px;
     font-family:'IBM Plex Mono', monospace;
     font-size:11px;
     color:var(--ink-soft);
+    border-top:2px solid var(--ink);
+    background:var(--panel);
+  }
+  .footer-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .footer-brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .footer-brand img{
+    height:52px;
+    width:auto;
+    display:block;
+  }
+  .footer-brand-text{
+    font-family:'Archivo', sans-serif;
+    line-height:1.3;
+  }
+  .footer-brand-text .fb-title{
+    font-size:13px;
+    font-weight:800;
+    color:var(--ink);
+  }
+  .footer-brand-text .fb-sub{
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  .footer-meta{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    flex-wrap:wrap;
+  }
+  .footer-meta-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .footer-meta-item img{
+    height:18px;
+    width:18px;
+    display:block;
+    opacity:0.75;
+  }
+  .footer-meta-item span{
+    font-size:11px;
+    line-height:1.35;
+  }
+  .footer-rule{
+    margin:14px 0 0;
+    border:none;
     border-top:1px solid var(--panel-border);
+  }
+  .footer-credit{
+    margin-top:10px;
+    font-size:10.5px;
+    color:var(--ink-soft);
   }
 
   @media (max-width:860px){
     .layout{grid-template-columns:1fr;}
     aside{border-right:none;border-bottom:2px solid var(--ink);}
+    .footer-inner{flex-direction:column;align-items:flex-start;}
   }
 </style>
 </head>
@@ -605,7 +669,29 @@
 </div>
 
 <footer>
-  Croquis esquemático, no a escala · Coordinación de Planeación, ETDA Campus I · versión interactiva basada en el plano original
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <img src="images/LOGO_UNACH.jpg" alt="">
+      <div class="footer-brand-text">
+        <div class="fb-title">Universidad Autónoma de Chiapas</div>
+        <div class="fb-sub">Escuela de Tecnologías Digitales Aplicadas C-1</div>
+      </div>
+    </div>
+    <div class="footer-meta">
+      <div class="footer-meta-item">
+        <img src="images/OIP (4).jpg" alt="">
+        <span>Campus I</span>
+      </div>
+      <div class="footer-meta-item">
+        <img src="data:image/webp;base64,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" alt="Fecha de actualización">
+        <span>Fecha de actualización:<br>Mayo 2025</span>
+      </div>
+    </div>
+  </div>
+  <hr class="footer-rule">
+  <div class="footer-credit">
+    Elaboró: Coordinación de Planeación ETDA, Campus I
+  </div>
 </footer>
 
 <script>

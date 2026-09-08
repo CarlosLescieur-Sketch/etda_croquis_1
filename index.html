@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plano ETDA · Croquis interactivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#eef2f4;
+    --ink:#1c2b3a;
+    --ink-soft:#4c5c6b;
+    --line:#26425c;
+    --panel:#ffffff;
+    --panel-border:#d7dfe4;
+    --accent:#c15a2e;
+
+    --c-estacionamiento:#b9c4cc;
+    --c-cafeteria:#f2a65a;
+    --c-sanitarios:#8ec6e6;
+    --c-escaleras:#c7cdd3;
+    --c-edificio-a:#b9a6de;
+    --c-edificio-b:#9fd8be;
+    --c-edificio-d:#f4c177;
+    --c-prepa7:#dcdcdc;
+    --c-mesas:#a8d08d;
+    --c-edificio-e1:#7fb8de;
+    --c-explanada:#d7e8b8;
+    --c-areas-verdes:#5f9e4a;
+    --c-construccion:#c9c9c9;
+    --c-biblioteca:#b79acd;
+    --c-administrativo:#efd98a;
+    --c-salas-computo:#8fb8d9;
+    --c-facultad-ingenieria:#d0d0d0;
+    --c-circulacion:#1c2b3a;
+    --c-servicios:#b9c7a0;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(rgba(28,43,58,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(28,43,58,0.05) 1px, transparent 1px);
+    background-size:26px 26px;
+    font-family:'Archivo', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+  }
+
+  header{
+    padding:22px 28px 16px;
+    border-bottom:2px solid var(--ink);
+  }
+  header h1{
+    margin:0;
+    font-size:22px;
+    font-weight:800;
+    letter-spacing:0.2px;
+  }
+  header p{
+    margin:4px 0 0;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:290px 1fr;
+    gap:0;
+    min-height:calc(100vh - 78px);
+  }
+
+  aside{
+    border-right:2px solid var(--ink);
+    background:var(--panel);
+    padding:18px 16px 24px;
+    overflow-y:auto;
+  }
+  aside h2{
+    font-size:12px;
+    text-transform:none;
+    letter-spacing:0.3px;
+    margin:0 0 10px;
+    color:var(--ink-soft);
+    font-weight:600;
+    border-bottom:1px solid var(--panel-border);
+    padding-bottom:6px;
+  }
+
+  .quick-actions{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .quick-actions button{
+    flex:1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    border:1px solid var(--ink);
+    background:var(--panel);
+    color:var(--ink);
+    padding:6px 4px;
+    cursor:pointer;
+    border-radius:3px;
+  }
+  .quick-actions button:hover{
+    background:var(--ink);
+    color:#fff;
+  }
+
+  .filter-row{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:6px 4px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .filter-row:hover{background:#f4f6f7;}
+  .filter-row input{
+    accent-color:var(--ink);
+    width:15px;
+    height:15px;
+    flex-shrink:0;
+  }
+  .swatch{
+    width:14px;
+    height:14px;
+    border-radius:3px;
+    border:1px solid rgba(0,0,0,0.25);
+    flex-shrink:0;
+  }
+  .filter-row label{
+    font-size:13px;
+    line-height:1.25;
+    cursor:pointer;
+  }
+
+  .note-box{
+    margin-top:18px;
+    padding:12px 12px 13px;
+    background:#fbf6ec;
+    border:1px solid #e3d5b0;
+    border-radius:4px;
+    font-size:12px;
+    color:var(--ink-soft);
+    line-height:1.45;
+  }
+  .note-box strong{color:var(--ink);}
+
+  main{
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+  }
+  .map-frame{
+    background:#fff;
+    border:2px solid var(--ink);
+    border-radius:4px;
+    flex:1;
+    padding:6px;
+  }
+  svg{
+    width:100%;
+    height:auto;
+    display:block;
+  }
+
+  .room rect{
+    stroke:var(--line);
+    stroke-width:1.4;
+    transition:opacity .15s ease;
+  }
+  .room:hover rect{opacity:0.72;}
+  .room text{
+    font-family:'IBM Plex Mono', monospace;
+    fill:var(--ink);
+    pointer-events:none;
+  }
+  .room .lbl-small{font-size:9.5px;}
+  .room .lbl-tiny{font-size:8px;}
+  .zone-label{
+    font-family:'Archivo', sans-serif;
+    font-weight:700;
+    fill:var(--ink);
+    pointer-events:none;
+  }
+  .plant-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    fill:var(--ink-soft);
+    pointer-events:none;
+  }
+  .hatch rect{fill:url(#hatchPattern);}
+  .constr rect{fill:url(#constrPattern);}
+
+  .tree circle{fill:var(--c-areas-verdes); stroke:#2f5a24; stroke-width:0.6;}
+
+  footer{
+    padding:12px 28px 18px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    border-top:1px solid var(--panel-border);
+  }
+
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;}
+    aside{border-right:none;border-bottom:2px solid var(--ink);}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Plano de ubicación de espacios e instalaciones</h1>
+  <p>Escuela de Tecnologías Digitales Aplicadas (ETDA), Campus I · croquis esquemático, no a escala</p>
+</header>
+
+<div class="layout">
+
+  <aside>
+    <h2>Filtros de visualización</h2>
+    <div class="quick-actions">
+      <button id="btnAll">Mostrar todo</button>
+      <button id="btnNone">Ocultar todo</button>
+    </div>
+    <div id="filterList"></div>
+
+    <div class="note-box">
+      <strong>Notas:</strong> croquis esquemático, no a escala. La accesibilidad universal es un área de oportunidad identificada en la valoración del plantel. Usa las casillas para mostrar u ocultar cada tipo de espacio sobre el croquis original.
+    </div>
+  </aside>
+
+  <main>
+    <div class="map-frame">
+      <svg id="mapa" viewBox="0 0 1240 950" xmlns="http://www.w3.org/2000/svg">
+
+        <defs>
+          <pattern id="hatchPattern" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+            <rect width="6" height="6" fill="#eef1f2"/>
+            <line x1="0" y1="0" x2="0" y2="6" stroke="#9aa4ab" stroke-width="2"/>
+          </pattern>
+          <pattern id="constrPattern" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
+            <rect width="10" height="10" fill="#e3e3e3"/>
+            <line x1="0" y1="0" x2="0" y2="10" stroke="#b3b3b3" stroke-width="3"/>
+          </pattern>
+        </defs>
+
+        <!-- ================= ESTACIONAMIENTO ================= -->
+        <g class="room" data-category="estacionamiento">
+          <rect x="100" y="-1.5" width="1050" height="52" fill="var(--c-estacionamiento)"/>
+          <text x="625" y="32" text-anchor="middle" class="zone-label" font-size="15">ESTACIONAMIENTO</text>
+          <title>Estacionamiento</title>
+        </g>
+
+        <!-- ================= CIRCULACIÓN / ENTRADAS (top) ================= -->
+        <g data-category="circulacion">
+          <path d="M300 78 L300 66 L294 66 L306 66 Z" fill="var(--c-circulacion)"/>
+          <text x="278" y="90" class="zone-label" font-size="13">Entrada</text>
+          <path d="M1200 335 L1200 347 L1194 347 L1206 347 Z" fill="var(--c-circulacion)"/>
+          <text x="1150" y="332" text-anchor="end" class="zone-label" font-size="12">Entrada</text>
+        </g>
+
+        <!-- ================= CLÚSTER CAFETERÍA / ADMINISTRACIÓN CAFETERÍA ================= -->
+        <g class="room" data-category="cafeteria">
+          <rect x="20" y="75" width="90" height="115" fill="var(--c-cafeteria)"/>
+          <text x="65" y="136" text-anchor="middle" class="lbl-small">Cafetería</text>
+          <title>Cafetería</title>
+        </g>
+        <g class="room" data-category="cafeteria">
+          <rect x="110" y="75" width="50" height="30" fill="var(--c-cafeteria)"/>
+          <text x="135" y="93" text-anchor="middle" class="lbl-tiny">Cubículo</text>
+          <title>Cubículo (cafetería)</title>
+        </g>
+        <g class="room" data-category="sanitarios">
+          <rect x="160" y="75" width="80" height="30" fill="var(--c-sanitarios)"/>
+          <text x="205" y="94" text-anchor="middle" class="lbl-tiny">San. Mujeres</text>
+          <title>Sanitarios mujeres</title>
+        </g>
+        <g class="room" data-category="sanitarios">
+          <rect x="160" y="105" width="80" height="30" fill="var(--c-sanitarios)"/>
+          <text x="205" y="124" text-anchor="middle" class="lbl-tiny">San. Hombres</text>
+          <title>Sanitarios hombres</title>
+        </g>
+        <g class="room" data-category="cafeteria">
+          <rect x="110" y="105" width="50" height="85" fill="var(--c-cafeteria)" opacity="0.85"/>
+          <text x="5" y="155" text-anchor="middle" class="lbl-small" transform="rotate(-90 67 85)">Sala de maestros</text>
+          <title>Sala de maestros</title>
+        </g>
+        <g class="room" data-category="servicios">
+          <rect x="160" y="135" width="35" height="55" fill="var(--c-servicios)"/>
+          <text x="178" y="158" text-anchor="middle" class="lbl-tiny">Control</text>
+          <text x="178" y="170" text-anchor="middle" class="lbl-tiny">Escolar</text>
+          <title>Control Escolar</title>
+        </g>
+        <g class="room" data-category="servicios">
+          <rect x="195" y="135" width="45" height="55" fill="var(--c-servicios)"/>
+          <text x="218" y="166" text-anchor="middle" class="lbl-tiny">Bodega</text>
+          <title>Bodega</title>
+        </g>
+        <g class="room hatch" data-category="escaleras">
+          <rect x="240" y="75" width="35" height="115" />
+          <text x="307" y="187" text-anchor="middle" class="lbl-tiny" transform="rotate(-90 257 185)">Cubículos</text>
+          <title>Cubículos</title>
+        </g>
+        <g class="room hatch" data-category="escaleras">
+          <rect x="285" y="105" width="35" height="195" />      
+          <title>Escaleras</title>
+        </g>
+
+        <!-- ================= EDIFICIO A ================= -->
+        <g data-category="edificio-a">
+          <text x="490" y="68" text-anchor="middle" class="zone-label" font-size="12">Planta Alta</text>
+          <text x="490" y="315" text-anchor="middle" class="zone-label" font-size="12">Planta Baja</text>
+        </g>
+        <g class="room" data-category="edificio-a">
+          <rect x="330" y="75" width="72.5" height="115" fill="var(--c-edificio-a)"/>
+          <text x="370" y="136" text-anchor="middle" class="lbl-small">A1</text><title>A1</title>
+        </g>
+        <g class="room" data-category="edificio-a">
+          <rect x="402.5" y="75" width="72.5" height="115" fill="var(--c-edificio-a)"/>
+          <text x="439" y="136" text-anchor="middle" class="lbl-small">A2</text><title>A2</title>
+        </g>
+        <g class="room" data-category="edificio-a">
+          <rect x="505" y="75" width="72.5" height="115" fill="var(--c-edificio-a)"/>
+          <text x="542" y="136" text-anchor="middle" class="lbl-small">A3</text><title>A3</title>
+        </g>
+        <g class="room" data-category="edificio-a">
+          <rect x="577.5" y="75" width="72.5" height="115" fill="var(--c-edificio-a)"/>
+          <text x="610" y="136" text-anchor="middle" class="lbl-small">A4</text><title>A4</title>
+        </g>
+        <g class="room" data-category="edificio-a">
+          <rect x="330" y="190" width="48.3" height="110" fill="var(--c-edificio-a)"/>
+          <text x="355" y="248" text-anchor="middle" class="lbl-small">A5</text><title>A5</title>
+        </g>
+        <g class="room hatch" data-category="cubiculos">
+          <rect x="378.3" y="190" width="48.3" height="110"/>
+          <text x="417" y="238" text-anchor="middle" class="lbl-tiny" transform="rotate(-90 417 248)">Cubículos</text>
+          <title>Cubículos</title>
+        </g>
+        <g class="room" data-category="edificio-a">
+          <rect x="426.6" y="190" width="48.3" height="110" fill="var(--c-edificio-a)"/>
+          <text x="452" y="248" text-anchor="middle" class="lbl-small">A6</text><title>A6</title>
+        </g>
+        <g class="room" data-category="edificio-a">
+          <rect x="505" y="190" width="70" height="110" fill="var(--c-edificio-a)"/>
+          <text x="540" y="248" text-anchor="middle" class="lbl-small">A7</text><title>A7</title>
+        </g>
+        <g class="room" data-category="edificio-a">
+          <rect x="575" y="190" width="75" height="110" fill="var(--c-edificio-a)"/>
+          <text x="612" y="248" text-anchor="middle" class="lbl-small">A8</text><title>A8</title>
+        </g>
+        <g class="room hatch" data-category="escaleras">
+          <rect x="475" y="75" width="30" height="225"/>
+          <title>Escaleras</title>
+        </g>
+
+        <!-- ================= EDIFICIO B ================= -->
+        <g data-category="edificio-b">
+          <text x="835" y="68" text-anchor="middle" class="zone-label" font-size="12">Planta Alta</text>
+          <text x="835" y="315" text-anchor="middle" class="zone-label" font-size="12">Planta Baja</text>
+        </g>
+        <g class="room" data-category="edificio-b">
+          <rect x="690" y="75" width="65" height="115" fill="var(--c-edificio-b)"/>
+          <text x="722" y="136" text-anchor="middle" class="lbl-small">B1</text><title>B1</title>
+        </g>
+        <g class="room" data-category="edificio-b">
+          <rect x="755" y="75" width="65" height="115" fill="var(--c-edificio-b)"/>
+          <text x="788" y="136" text-anchor="middle" class="lbl-small">B2</text><title>B2</title>
+        </g>
+        <g class="room" data-category="edificio-b">
+          <rect x="850" y="75" width="65" height="115" fill="var(--c-edificio-b)"/>
+          <text x="882" y="136" text-anchor="middle" class="lbl-small">B3</text><title>B3</title>
+        </g>
+        <g class="room" data-category="edificio-b">
+          <rect x="915" y="75" width="65" height="115" fill="var(--c-edificio-b)"/>
+          <text x="948" y="136" text-anchor="middle" class="lbl-small">B4</text><title>B4</title>
+        </g>
+        <g class="room" data-category="edificio-b">
+          <rect x="690" y="190" width="65" height="110" fill="var(--c-edificio-b)"/>
+          <text x="722" y="248" text-anchor="middle" class="lbl-small">B5</text><title>B5</title>
+        </g>
+        <g class="room" data-category="edificio-b">
+          <rect x="755" y="190" width="65" height="110" fill="var(--c-edificio-b)"/>
+          <text x="788" y="248" text-anchor="middle" class="lbl-small">B6</text><title>B6</title>
+        </g>
+        <g class="room" data-category="edificio-b">
+          <rect x="850" y="190" width="130" height="110" fill="var(--c-edificio-b)"/>
+          <text x="915" y="248" text-anchor="middle" class="lbl-small">Audiovisual</text><title>Audiovisual</title>
+        </g>
+
+        <g class="room hatch" data-category="escaleras">
+          <rect x="820" y="75" width="30" height="225"/>
+          <title>Escaleras</title>
+        </g>
+        <!-- ================= EDIFICIO D ================= -->
+        <g class="room" data-category="edificio-d">
+          <rect x="1020" y="80" width="70" height="180" fill="var(--c-edificio-d)"/>
+          <text x="1055" y="173" text-anchor="middle" class="lbl-small">D1</text><title>D1</title>
+        </g>
+        <g class="room" data-category="edificio-d">
+          <rect x="1090" y="80" width="65" height="180" fill="var(--c-edificio-d)"/>
+          <text x="1122" y="173" text-anchor="middle" class="lbl-small">D2</text><title>D2</title>
+        </g>
+
+        <!-- ================= PREPA 7 ================= -->
+        <g class="room" data-category="prepa7">
+          <rect x="1165" y="70" width="65" height="200" fill="var(--c-prepa7)"/>
+          <text x="1197" y="173" text-anchor="middle" class="lbl-small" transform="rotate(-90 1197 173)">Prepa 7</text>
+          <title>Prepa 7 (edificio vecino)</title>
+        </g>
+        <g class="room hatch" data-category="escaleras">
+          <rect x="1165" y="278" width="65" height="55"/>
+          <title>Acceso / entrada oriente</title>
+        </g>
+
+        <!-- ================= MESAS AL AIRE LIBRE ================= -->
+        <g class="room" data-category="mesas">
+          <rect x="20" y="330" width="190" height="120" fill="var(--c-mesas)" opacity="0.55"/>
+          <circle cx="80" cy="365" r="16" fill="#fff" stroke="var(--line)"/>
+          <circle cx="150" cy="365" r="16" fill="#fff" stroke="var(--line)"/>
+          <circle cx="80" cy="420" r="16" fill="#fff" stroke="var(--line)"/>
+          <circle cx="150" cy="420" r="16" fill="#fff" stroke="var(--line)"/>
+          <text x="140" y="460" text-anchor="middle" class="lbl-small">Mesas al aire libre</text>
+          <title>Mesas al aire libre</title>
+
+        <!-- ================= EDIFICIO E1 ================= -->
+        <g class="room" data-category="edificio-e1">
+          <rect x="20" y="480" width="90" height="115" fill="var(--c-edificio-e1)"/>
+          <text x="65" y="540" text-anchor="middle" class="lbl-small">E1</text>
+          <title>E1 · Laboratorios de Robótica, Soporte y Electrónica</title>
+        </g>
+        <g class="room" data-category="edificio-e1">
+          <rect x="110" y="480" width="140" height="115" fill="var(--c-edificio-e1)"/>
+          <text x="180" y="536" text-anchor="middle" class="lbl-tiny">Laboratorios de Robótica,</text>
+          <text x="180" y="548" text-anchor="middle" class="lbl-tiny">Soporte y Electrónica</text>
+        </g>
+        <g data-category="circulacion">
+          <text x="140" y="608" text-anchor="middle" class="plant-label">Acceso por la F. de Ingeniería</text>
+        </g>
+        
+
+        <!-- ================= SANITARIOS MUJERES (centro) ================= -->
+        <g class="room" data-category="sanitarios">
+          <rect x="280" y="390" width="55" height="100" fill="var(--c-sanitarios)"/>
+          <text x="420" y="555" text-anchor="middle" class="lbl-small" transform="rotate(-90 307 555)">Sanitarios</text>
+          <text x="420" y="565" text-anchor="middle" class="lbl-small" transform="rotate(-90 307 555)">mujeres</text>
+          <title>Sanitarios mujeres</title>
+        </g>
+
+        <!-- ================= EXPLANADA ================= -->
+        <g class="room" data-category="explanada">
+          <rect x="365" y="330" width="325" height="160" fill="var(--c-explanada)"/>
+          <text x="527" y="415" text-anchor="middle" class="zone-label" font-size="14">Explanada</text>
+          <title>Explanada</title>
+        </g>
+        <g class="tree" data-category="areas-verdes">
+          <circle cx="410" cy="360" r="8"/><circle cx="460" cy="465" r="8"/><circle cx="560" cy="355" r="8"/>
+          <circle cx="640" cy="470" r="8"/><circle cx="420" cy="460" r="8"/><circle cx="620" cy="360" r="8"/>
+        </g>
+        <g class="room hatch" data-category="escaleras">
+          <rect x="690" y="500" width="45" height="90"/>
+          <title>Escalera hacia biblioteca</title>
+        </g>
+
+        <!-- ================= CONSTRUCCIÓN ================= -->
+        <g class="room constr" data-category="construccion">
+          <rect x="790" y="390" width="370" height="260" stroke-dasharray="6 4"/>
+          <text x="975" y="510" text-anchor="middle" class="zone-label" font-size="15">CONSTRUCCIÓN</text>
+          <text x="975" y="530" text-anchor="middle" class="plant-label">(Nuevo edificio ETDA)</text>
+          <title>Construcción — nuevo edificio ETDA</title>
+        </g>
+
+        <!-- ================= BIBLIOTECA / ARCHIVO ================= -->
+        <g class="room" data-category="biblioteca">
+          <rect x="365" y="560" width="140" height="100" fill="var(--c-biblioteca)"/>
+          <text x="435" y="614" text-anchor="middle" class="lbl-small">Biblioteca</text>
+          <title>Biblioteca</title>
+        </g>
+        <g class="room" data-category="biblioteca">
+          <rect x="505" y="560" width="55" height="100" fill="var(--c-biblioteca)" opacity="0.8"/>
+          <text x="532" y="612" text-anchor="middle" class="lbl-tiny" transform="rotate(-90 532 612)">Archivo</text>
+          <title>Archivo</title>
+        </g>
+        <g class="room" data-category="sanitarios">
+          <rect x="600" y="560" width="55" height="100" fill="var(--c-sanitarios)"/>
+          <text x="587" y="654" text-anchor="middle" class="lbl-tiny" transform="rotate(-90 587 612)">San. hombres</text>
+          <title>Sanitarios hombres</title>
+        </g>
+        <g class="room hatch" data-category="escaleras">
+          <rect x="560" y="560" width="40" height="100"/>
+          <title>Escalera ancha hacia Edificio A</title>
+        </g>
+        <g class="tree" data-category="areas-verdes">
+          <circle cx="345" cy="600" r="8"/><circle cx="345" cy="640" r="8"/>
+        </g>
+
+        <!-- ================= FACULTAD DE INGENIERÍA ================= -->
+        <g class="room" data-category="facultad-ingenieria">
+          <rect x="20" y="730" width="170" height="170" fill="var(--c-facultad-ingenieria)"/>
+          <text x="105" y="815" text-anchor="middle" class="lbl-small">Facultad de</text>
+          <text x="105" y="830" text-anchor="middle" class="lbl-small">Ingeniería</text>
+          <title>Facultad de Ingeniería (edificio vecino)</title>
+        </g>
+
+        <!-- ================= EDIFICIO ADMINISTRATIVO ================= -->
+        <g class="room" data-category="administrativo">
+          <rect x="210" y="730" width="82" height="85" fill="var(--c-administrativo)"/>
+          <text x="251" y="780" text-anchor="middle" class="lbl-tiny">Administrador</text>
+          <title>Administrador</title>
+        </g>
+        <g class="room" data-category="administrativo">
+          <rect x="210" y="815" width="82" height="85" fill="var(--c-administrativo)"/>
+          <text x="251" y="855" text-anchor="middle" class="lbl-tiny">Secretaria</text>
+          <text x="251" y="865" text-anchor="middle" class="lbl-tiny">Académica</text>
+          <title>Secretaria Académica</title>
+        </g>
+        <g class="room" data-category="administrativo">
+          <rect x="292" y="730" width="164" height="85" fill="var(--c-administrativo)"/>
+          <text x="370" y="775" text-anchor="middle" class="lbl-tiny">Recepcion</text>
+          <title>Recepcion</title>
+        </g>
+        <g class="room" data-category="administrativo">
+          <rect x="292" y="815" width="82" height="85" fill="var(--c-administrativo)" opacity="0.85"/>
+          <text x="333" y="860" text-anchor="middle" class="lbl-tiny">Extension</text>
+          <title>Extension</title>
+        </g>
+        <g class="room" data-category="administrativo">
+          <rect x="374" y="815" width="82" height="85" fill="var(--c-administrativo)"/>
+          <text x="415" y="860" text-anchor="middle" class="lbl-tiny">Sanitarios</text>
+          <title>Sanitarios</title>
+        </g>
+        <g class="room" data-category="administrativo">
+          <rect x="456" y="730" width="82" height="85" fill="var(--c-administrativo)" opacity="0.85"/>
+          <text x="497" y="770" text-anchor="middle" class="lbl-tiny">Coordinación</text>
+          <text x="497" y="780" text-anchor="middle" class="lbl-tiny">de Posgrado</text>
+          <title>Coordinación de Posgrado</title>
+        </g>
+        <g class="room" data-category="administrativo">
+          <rect x="456" y="815" width="82" height="85" fill="var(--c-administrativo)" opacity="0.85"/>
+          <text x="497" y="860" text-anchor="middle" class="lbl-tiny">Oficina</text>
+          <title>Oficina</title>
+        </g>
+        <g class="room" data-category="administrativo">
+          <rect x="538" y="730" width="82" height="85" fill="var(--c-administrativo)"/>
+          <text x="579" y="780" text-anchor="middle" class="lbl-tiny">Oficina</text>
+          <title>Oficina</title>
+        </g>
+        <g class="room" data-category="administrativo">
+          <rect x="538" y="815" width="82" height="85" fill="var(--c-administrativo)"/>
+          <text x="579" y="860" text-anchor="middle" class="lbl-tiny">Dirección</text>
+          <title>Dirección</title>
+        </g>
+
+        <!-- ================= EDIFICIO DE SALAS DE CÓMPUTO / CUBÍCULOS DE MAESTROS ================= -->
+        <g class="room" data-category="salas-computo">
+          <rect x="650" y="730" width="245" height="55" fill="var(--c-salas-computo)"/>
+          <text x="772" y="762" text-anchor="middle" class="lbl-small">Cubículos de maestros</text>
+          <title>Cubículos de maestros</title>
+        </g>
+        <g class="room" data-category="salas-computo">
+          <rect x="650" y="785" width="245" height="57" fill="var(--c-salas-computo)" opacity="0.85"/>
+          <text x="772" y="817" text-anchor="middle" class="lbl-tiny">1er Piso: Coordinación Académica</text>
+          <text x="772" y="829" text-anchor="middle" class="lbl-tiny">y Laboratorios</text>
+          <title>1er piso: Coordinación Académica y Laboratorios</title>
+        </g>
+        <g class="room" data-category="salas-computo">
+          <rect x="650" y="842" width="245" height="58" fill="var(--c-salas-computo)"/>
+          <text x="772" y="874" text-anchor="middle" class="lbl-tiny">2o Piso: Laboratorios y</text>
+          <text x="772" y="886" text-anchor="middle" class="lbl-tiny">encargado de Sistemas</text>
+          <title>2o piso: Laboratorios y encargado de Sistemas</title>
+        </g>
+
+        <g class="room" data-category="salas-computo">
+          <rect x="905" y="730" width="245" height="55" fill="var(--c-salas-computo)"/>
+          <text x="1027" y="762" text-anchor="middle" class="lbl-small">Cubículos de maestros</text>
+          <title>Cubículos de maestros</title>
+        </g>
+        <g class="room" data-category="salas-computo">
+          <rect x="905" y="785" width="245" height="57" fill="var(--c-salas-computo)" opacity="0.85"/>
+          <text x="1027" y="817" text-anchor="middle" class="lbl-tiny">1er Piso: Coordinación Académica</text>
+          <text x="1027" y="829" text-anchor="middle" class="lbl-tiny">y Laboratorios</text>
+          <title>1er piso: Coordinación Académica y Laboratorios</title>
+        </g>
+        <g class="room" data-category="salas-computo">
+          <rect x="905" y="842" width="245" height="58" fill="var(--c-salas-computo)"/>
+          <text x="1027" y="874" text-anchor="middle" class="lbl-tiny">2o Piso: Laboratorios y</text>
+          <text x="1027" y="886" text-anchor="middle" class="lbl-tiny">encargado de Sistemas</text>
+          <title>2o piso: Laboratorios y encargado de Sistemas</title>
+        </g>
+
+        <g data-category="circulacion">
+          <path d="M900 918 L900 930 L894 930 L906 930 Z" fill="var(--c-circulacion)"/>
+          <text x="900" y="945" text-anchor="middle" class="zone-label" font-size="13">Entrada</text>
+        </g>
+
+      </svg>
+    </div>
+  </main>
+</div>
+
+<footer>
+  Croquis esquemático, no a escala · Coordinación de Planeación, ETDA Campus I · versión interactiva basada en el plano original
+</footer>
+
+<script>
+  const categories = [
+    ["estacionamiento", "Estacionamiento"],
+    ["cafeteria", "Cafetería y sala de maestros"],
+    ["servicios", "Control escolar y bodega"],
+    ["sanitarios", "Sanitarios"],
+    ["escaleras", "Escaleras y cubículos técnicos"],
+    ["edificio-a", "Edificio A (aulas)"],
+    ["edificio-b", "Edificio B (aulas y audiovisual)"],
+    ["edificio-d", "Edificio D"],
+    ["prepa7", "Prepa 7 (edificio vecino)"],
+    ["mesas", "Mesas al aire libre"],
+    ["edificio-e1", "Edificio E1 (laboratorios)"],
+    ["explanada", "Explanada"],
+    ["areas-verdes", "Áreas verdes"],
+    ["construccion", "Construcción (nuevo edificio)"],
+    ["biblioteca", "Biblioteca y archivo"],
+    ["administrativo", "Edificio administrativo"],
+    ["salas-computo", "Cubículos de maestros / salas de cómputo"],
+    ["facultad-ingenieria", "Facultad de Ingeniería"],
+    ["circulacion", "Entradas y circulación"],
+  ];
+
+  const list = document.getElementById("filterList");
+  categories.forEach(([key, label]) => {
+    const row = document.createElement("div");
+    row.className = "filter-row";
+    row.innerHTML = `
+      <input type="checkbox" id="chk-${key}" checked>
+      <span class="swatch" style="background:var(--c-${key})"></span>
+      <label for="chk-${key}">${label}</label>
+    `;
+    list.appendChild(row);
+    row.querySelector("input").addEventListener("change", (e) => {
+      toggleCategory(key, e.target.checked);
+    });
+  });
+
+  function toggleCategory(key, visible) {
+    document.querySelectorAll(`[data-category="${key}"]`).forEach(el => {
+      el.style.display = visible ? "" : "none";
+    });
+  }
+
+  document.getElementById("btnAll").addEventListener("click", () => {
+    document.querySelectorAll('#filterList input[type="checkbox"]').forEach(chk => {
+      chk.checked = true;
+      toggleCategory(chk.id.replace("chk-", ""), true);
+    });
+  });
+  document.getElementById("btnNone").addEventListener("click", () => {
+    document.querySelectorAll('#filterList input[type="checkbox"]').forEach(chk => {
+      chk.checked = false;
+      toggleCategory(chk.id.replace("chk-", ""), false);
+    });
+  });
+</script>
+
+</body>
+</html>
